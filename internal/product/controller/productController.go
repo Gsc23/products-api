@@ -36,8 +36,24 @@ func (pc *productController) Index(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func (pc *productController) Create(c *gin.Context) {
+func (pc *productController) GetProduct(c *gin.Context) {
+	productId, _ := c.Params.Get("id")
 
+	cmd := command.GetProductCommand{
+		ID: productId,
+	}
+
+	result, err := pc.bus.Dispatch(c.Request.Context(), cmd)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (pc *productController) Create(c *gin.Context) {
 	var cmd command.CreateProductCommand
 	if err := c.ShouldBindJSON(&cmd); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -53,5 +69,47 @@ func (pc *productController) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Produto Criado",
 		"id":      productId,
+	})
+}
+
+func (pc *productController) Update(c *gin.Context) {
+	productId, _ := c.Params.Get("id")
+
+	cmd := command.UpdateProductCommand{
+		ID: productId,
+	}
+	
+	if err := c.ShouldBindJSON(&cmd); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := pc.bus.Dispatch(c.Request.Context(), cmd)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Produto atualizados",
+		"produto": result,
+	})
+}
+
+func (pc *productController) Delete(c *gin.Context) {
+	productId, _ := c.Params.Get("id")
+
+	cmd := command.UpdateProductCommand{
+		ID: productId,
+	}
+
+	_, err := pc.bus.Dispatch(c.Request.Context(), cmd)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusNoContent, gin.H{
+		"message": "Produto deletado",
 	})
 }

@@ -1,6 +1,11 @@
-include .env
-export $(shell sed 's/=.*//' .env)
+IMAGE_NAME = products-api
+DOCKERFILE_PATH = ./docker/dockerfile
+PORT = 8080
+CONTAINER_NAME = products-api-container
 
+env:
+	cp .env.example .env
+	
 # Build da imagem
 docker_build:
 	docker build -t $(IMAGE_NAME) -f $(DOCKERFILE_PATH) .

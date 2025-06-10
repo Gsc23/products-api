@@ -19,7 +19,10 @@ func ProductRoutes(db *sql.DB) {
 
 	commandBus := bus.NewBus()
 	commandBus.RegisterHandler(productHandler, command.CreateProductCommand{})
+	commandBus.RegisterHandler(productHandler, command.GetProductCommand{})
 	commandBus.RegisterHandler(productHandler, command.ListProductsQuery{})
+	commandBus.RegisterHandler(productHandler, command.UpdateProductCommand{})
+	commandBus.RegisterHandler(productHandler, command.DeleteProductCommand{})
 
 	productController := controller.NewProductController(commandBus)
 
@@ -32,23 +35,13 @@ func ProductRoutes(db *sql.DB) {
 
 	router.GET("/products", productController.Index)
 
-	router.GET("/products/:id", func(c *gin.Context) {
-		c.JSON(http.StatusCreated, gin.H{
-			"message": "product",
-		})
-	})
+	router.GET("/products/:id", productController.GetProduct)
 
 	router.POST("/products", productController.Create)
 
-	router.PUT("/products", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "updated",
-		})
-	})
+	router.PUT("/products/:id", productController.Update)
 
-	router.DELETE("/products", func(c *gin.Context) {
-		c.JSON(http.StatusNoContent, gin.H{})
-	})
+	router.DELETE("/products/:id", productController.Delete)
 
 	router.Run()
 }

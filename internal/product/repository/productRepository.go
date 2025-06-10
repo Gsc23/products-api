@@ -35,18 +35,6 @@ func (r *ProductRepository) Migrate() error {
 	return err
 }
 
-func (r *ProductRepository) Save(ctx context.Context, p *ProductModel) (*ProductModel, error) {
-	p.ID = uuid.New().String()
-	query := "INSERT INTO products (id, name, category, price) VALUES (?, ?, ?, ?)"
-
-	_, err := r.db.ExecContext(ctx, query, p.ID, p.Name, p.Category, p.Price)
-	if err != nil {
-		return nil, err
-	}
-
-	return p, nil
-}
-
 func (r *ProductRepository) Count(ctx context.Context) (int64, error) {
 	var count int64
 	query := "SELECT COUNT(*) FROM products"
@@ -55,9 +43,9 @@ func (r *ProductRepository) Count(ctx context.Context) (int64, error) {
 }
 
 func (r *ProductRepository) GetList(ctx context.Context, offset int, limit int) ([]*ProductModel, error) {
-	querySQL := "SELECT id, name, category, price FROM products ORDER BY name LIMIT ? OFFSET ?"
+	query := "SELECT id, name, category, price FROM products ORDER BY name LIMIT ? OFFSET ?"
 
-	rows, err := r.db.QueryContext(ctx, querySQL, limit, offset)
+	rows, err := r.db.QueryContext(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -73,5 +61,49 @@ func (r *ProductRepository) GetList(ctx context.Context, offset int, limit int) 
 	}
 
 	return products, rows.Err()
+}
 
+func (r *ProductRepository) GetById(ctx context.Context, id string) (*ProductModel, error) {
+	query := "SELECT id, name, category, price FROM products WHERE id = ?"
+
+	var p ProductModel
+	err := r.db.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.Category, &p.Price)
+	if err != nil {
+		return nil, err
+	}
+
+	product := &p
+
+	return product, err
+}
+
+func (r *ProductRepository) Save(ctx context.Context, p *ProductModel) (*ProductModel, error) {
+	p.ID = uuid.New().String()
+	query := "INSERT INTO products (id, name, category, price) VALUES (?, ?, ?, ?)"
+
+	_, err := r.db.ExecContext(ctx, query, p.ID, p.Name, p.Category, p.Price)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func (r *ProductRepository) Update(ctx context.Context, p *ProductModel) (interface{}, error) {
+	query := "UPDATE products SET name=?, category=?, price=? WHERE id=?"
+
+	result, err := r.db.ExecContext(ctx, query, &p.Name, &p.Category, &p.Price, &p.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, err
+}
+
+func (r *ProductRepository) Delete(ctx context.Context, p *ProductModel) (interface{}, error) {
+	query := "DELETE FROM products WHERE id=?;"
+
+	result, err := r.db.ExecContext(ctx, query, p.ID)
+
+	return result, err
 }
