@@ -32,8 +32,8 @@ func (b *Bus)Dispatch(ctx context.Context, msg interface{}) (interface{}, error)
 	
 	msgType := reflect.TypeOf(msg)
 	
-	handler, err := b.handlers[msgType]
-	if !err {
+	handler, ok := b.handlers[msgType]
+	if !ok {
 		return nil, fmt.Errorf("any handler find for the type: %s", msgType)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"example/products/internal/product/command"
 	"example/products/pkg/bus"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,25 @@ type productController struct {
 
 func NewProductController(b *bus.Bus) *productController {
 	return &productController{bus: b}
+}
+
+func (pc *productController) Index(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+
+	qry := command.ListProductsQuery{
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	result, err := pc.bus.Dispatch(c.Request.Context(), qry)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func (pc *productController) Create(c *gin.Context) {

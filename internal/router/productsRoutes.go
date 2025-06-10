@@ -14,11 +14,12 @@ import (
 
 func ProductRoutes(db *sql.DB) {
 	productRepo := repository.NewProductRepository(db)
-	
+
 	productHandler := handler.NewProductHandler(productRepo)
 
 	commandBus := bus.NewBus()
 	commandBus.RegisterHandler(productHandler, command.CreateProductCommand{})
+	commandBus.RegisterHandler(productHandler, command.ListProductsQuery{})
 
 	productController := controller.NewProductController(commandBus)
 
@@ -29,11 +30,7 @@ func ProductRoutes(db *sql.DB) {
 		})
 	})
 
-	router.GET("/products", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "productsList",
-		})
-	})
+	router.GET("/products", productController.Index)
 
 	router.GET("/products/:id", func(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
